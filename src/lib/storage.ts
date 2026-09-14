@@ -1,5 +1,19 @@
-import { Task, ChatMessage, Mode, Habit, FocusSession, DailyDebriefReport } from '../types';
+import {
+  Task,
+  ChatMessage,
+  Mode,
+  Habit,
+  FocusSession,
+  DailyDebriefReport,
+  TeamMember,
+  TeamBooking,
+  CashoutTransaction,
+  CashoutAccount,
+  ThemeId,
+  UserAccount,
+} from '../types';
 
+const THEME_KEY = 'nexus_ai_theme';
 const TASKS_KEY = 'nexus_ai_tasks';
 const MODE_KEY = 'nexus_ai_mode';
 const CHAT_KEY = 'nexus_ai_chat';
@@ -7,6 +21,225 @@ const STREAKS_KEY = 'nexus_ai_streaks';
 const HABITS_KEY = 'nexus_ai_habits';
 const FOCUS_SESSIONS_KEY = 'nexus_ai_focus_sessions';
 const DEBRIEF_KEY = 'nexus_ai_debrief';
+const TEAM_MEMBERS_KEY = 'nexus_ai_team_members';
+const TEAM_BOOKINGS_KEY = 'nexus_ai_team_bookings';
+const CASHOUT_TXS_KEY = 'nexus_ai_cashout_txs';
+const CASHOUT_ACCOUNT_KEY = 'nexus_ai_cashout_account';
+const USERS_KEY = 'arkih_registered_users';
+const CURRENT_USER_KEY = 'arkih_current_user_session';
+
+export const INITIAL_USERS: UserAccount[] = [
+  {
+    id: 'usr-admin-1',
+    username: 'carlos.mendes',
+    fullName: 'Carlos Mendes',
+    phone: '(11) 98123-4567',
+    cpf: '142.583.920-11',
+    accountType: 'corporativo',
+    companyName: 'Arkih Soluções Corporativas Ltda',
+    cnpj: '24.582.910/0001-38',
+    role: 'diretoria',
+    roleTitle: 'Diretoria Executiva / Administrador Geral',
+    roleDescription: 'Acesso total: liquidação via Pix, despacho, auditoria e relatórios executivos',
+    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+    createdAt: '2026-01-10T08:00:00.000Z',
+  },
+  {
+    id: 'usr-coord-2',
+    username: 'mariana.alencar',
+    fullName: 'Mariana Alencar',
+    phone: '(11) 97321-8890',
+    cpf: '285.491.730-44',
+    accountType: 'corporativo',
+    companyName: 'Arkih Soluções Corporativas Ltda',
+    cnpj: '24.582.910/0001-38',
+    role: 'coordenacao',
+    roleTitle: 'Coordenação de Projetos & Tarefas',
+    roleDescription: 'Gestão e despacho: delegação de consultas e entregas, prazos e rotinas',
+    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80',
+    createdAt: '2026-02-14T09:30:00.000Z',
+  },
+  {
+    id: 'usr-oper-3',
+    username: 'lucas.ferreira',
+    fullName: 'Lucas Ferreira',
+    phone: '(11) 96455-1234',
+    cpf: '394.812.503-77',
+    accountType: 'individual',
+    role: 'operacional',
+    roleTitle: 'Especialista / Operador de Execução',
+    roleDescription: 'Execução de rotinas diárias, blocos de foco Pomodoro e hábitos pessoais',
+    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+    createdAt: '2026-03-01T11:00:00.000Z',
+  },
+];
+
+export const INITIAL_TEAM_MEMBERS: TeamMember[] = [
+  {
+    id: 'tm-1',
+    name: 'Dr. André Silva',
+    role: 'Especialista em Saúde & Clínica',
+    avatar: 'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=150&auto=format&fit=crop&q=80',
+    specialty: 'Consultas Médicas & Avaliações',
+    active: true,
+    phone: '(11) 98765-4321',
+    completedBookings: 28,
+  },
+  {
+    id: 'tm-2',
+    name: 'Roberto Santos',
+    role: 'Coordenador de Entregas & Logística',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    specialty: 'Entregas Express & Remessas',
+    active: true,
+    phone: '(11) 97654-3210',
+    completedBookings: 64,
+  },
+  {
+    id: 'tm-3',
+    name: 'Mariana Lima',
+    role: 'Consultora de Negócios & Atendimento',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+    specialty: 'Alinhamentos & Consultorias',
+    active: true,
+    phone: '(11) 96543-2109',
+    completedBookings: 42,
+  },
+  {
+    id: 'tm-4',
+    name: 'Carlos Oliveira',
+    role: 'Entregador Operacional',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    specialty: 'Entregas de Produtos & Documentos',
+    active: true,
+    phone: '(11) 95432-1098',
+    completedBookings: 91,
+  },
+];
+
+export const INITIAL_TEAM_BOOKINGS: TeamBooking[] = [
+  {
+    id: 'tb-1',
+    type: 'consulta',
+    title: 'Consulta Clínica Geral — Avaliação Trimestral',
+    clientName: 'Fernando Albuquerque',
+    clientPhone: '(11) 99123-4567',
+    clientEmail: 'fernando.albuquerque@email.com',
+    date: new Date().toISOString().split('T')[0],
+    time: '10:30',
+    durationMinutes: 45,
+    assignedMemberId: 'tm-1',
+    assignedMemberName: 'Dr. André Silva',
+    status: 'confirmado',
+    price: 250,
+    paymentStatus: 'pago',
+    locationOrLink: 'Consultório 3 / Google Meet: meet.google.com/ark-med-cons',
+    notes: 'Paciente solicitou retorno para conferência de exames de rotina.',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'tb-2',
+    type: 'entrega',
+    title: 'Entrega de Contratos & Documentos Fiscais',
+    clientName: 'TechSolutions Brasil',
+    clientPhone: '(11) 98888-7777',
+    clientEmail: 'contato@techsolutions.com.br',
+    date: new Date().toISOString().split('T')[0],
+    time: '15:00',
+    durationMinutes: 30,
+    assignedMemberId: 'tm-2',
+    assignedMemberName: 'Roberto Santos',
+    status: 'em_rota',
+    price: 45,
+    paymentStatus: 'pago',
+    deliveryAddress: 'Av. Paulista, 1842 - Conjunto 112, Bela Vista, São Paulo - SP',
+    notes: 'Entregar na recepção aos cuidados de Patrícia Ramos.',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'tb-3',
+    type: 'consulta',
+    title: 'Consultoria Estratégica de Planejamento Q4',
+    clientName: 'Juliana Mendes',
+    clientPhone: '(11) 97777-6666',
+    date: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+    time: '14:00',
+    durationMinutes: 60,
+    assignedMemberId: 'tm-3',
+    assignedMemberName: 'Mariana Lima',
+    status: 'agendado',
+    price: 320,
+    paymentStatus: 'pago',
+    locationOrLink: 'Sala Virtual ARKIH Teams: meet.google.com/ark-plan-jul',
+    notes: 'Apresentação de métricas e alinhamento de escopo.',
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'tb-4',
+    type: 'entrega',
+    title: 'Entrega Express — Kit de Boas-Vindas Corporativo',
+    clientName: 'Camila Rocha',
+    clientPhone: '(11) 96666-5555',
+    date: new Date().toISOString().split('T')[0],
+    time: '16:45',
+    durationMinutes: 30,
+    assignedMemberId: 'tm-4',
+    assignedMemberName: 'Carlos Oliveira',
+    status: 'concluido',
+    price: 55,
+    paymentStatus: 'pago',
+    deliveryAddress: 'Rua Oscar Freire, 920 - Apto 82, Cerqueira César, São Paulo - SP',
+    notes: 'Deixar com a portaria 24h caso não atenda o interfone.',
+    createdAt: new Date().toISOString(),
+  },
+];
+
+export const INITIAL_CASHOUT_TRANSACTIONS: CashoutTransaction[] = [
+  {
+    id: 'ctx-1',
+    type: 'inflow_booking',
+    description: 'Recebimento de Consulta — Fernando Albuquerque',
+    amount: 250,
+    date: new Date().toISOString().split('T')[0],
+    status: 'concluido',
+    referenceId: 'tb-1',
+  },
+  {
+    id: 'ctx-2',
+    type: 'inflow_booking',
+    description: 'Recebimento de Entrega Express — Kit Corporativo',
+    amount: 55,
+    date: new Date().toISOString().split('T')[0],
+    status: 'concluido',
+    referenceId: 'tb-4',
+  },
+  {
+    id: 'ctx-3',
+    type: 'inflow_booking',
+    description: 'Recebimento de Entrega Docs — TechSolutions',
+    amount: 45,
+    date: new Date().toISOString().split('T')[0],
+    status: 'concluido',
+    referenceId: 'tb-2',
+  },
+  {
+    id: 'ctx-4',
+    type: 'outflow_cashout',
+    description: 'Cashout Instantâneo via Pix para Matheus Henrique Santiago',
+    amount: 200,
+    date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    status: 'concluido',
+    pixKey: 'matheushenriquesantiago58@gmail.com',
+    receiptId: 'PIX-ARK-89412-2026',
+  },
+];
+
+export const INITIAL_CASHOUT_ACCOUNT: CashoutAccount = {
+  pixKeyType: 'email',
+  pixKey: 'matheushenriquesantiago58@gmail.com',
+  recipientName: 'Matheus Henrique Santiago',
+  bankName: 'Nubank (260)',
+};
 
 export const INITIAL_HABITS: Habit[] = [
   {
@@ -240,4 +473,151 @@ export function saveDebrief(debrief: DailyDebriefReport | null) {
     console.error('Failed to save debrief', e);
   }
 }
+
+export function loadTeamMembers(): TeamMember[] {
+  try {
+    const raw = localStorage.getItem(TEAM_MEMBERS_KEY);
+    if (!raw) return INITIAL_TEAM_MEMBERS;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_TEAM_MEMBERS;
+  } catch {
+    return INITIAL_TEAM_MEMBERS;
+  }
+}
+
+export function saveTeamMembers(members: TeamMember[]) {
+  try {
+    localStorage.setItem(TEAM_MEMBERS_KEY, JSON.stringify(members));
+  } catch (e) {
+    console.error('Failed to save team members', e);
+  }
+}
+
+export function loadTeamBookings(): TeamBooking[] {
+  try {
+    const raw = localStorage.getItem(TEAM_BOOKINGS_KEY);
+    if (!raw) return INITIAL_TEAM_BOOKINGS;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : INITIAL_TEAM_BOOKINGS;
+  } catch {
+    return INITIAL_TEAM_BOOKINGS;
+  }
+}
+
+export function saveTeamBookings(bookings: TeamBooking[]) {
+  try {
+    localStorage.setItem(TEAM_BOOKINGS_KEY, JSON.stringify(bookings));
+  } catch (e) {
+    console.error('Failed to save team bookings', e);
+  }
+}
+
+export function loadCashoutTransactions(): CashoutTransaction[] {
+  try {
+    const raw = localStorage.getItem(CASHOUT_TXS_KEY);
+    if (!raw) return INITIAL_CASHOUT_TRANSACTIONS;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : INITIAL_CASHOUT_TRANSACTIONS;
+  } catch {
+    return INITIAL_CASHOUT_TRANSACTIONS;
+  }
+}
+
+export function saveCashoutTransactions(transactions: CashoutTransaction[]) {
+  try {
+    localStorage.setItem(CASHOUT_TXS_KEY, JSON.stringify(transactions));
+  } catch (e) {
+    console.error('Failed to save cashout transactions', e);
+  }
+}
+
+export function loadCashoutAccount(): CashoutAccount {
+  try {
+    const raw = localStorage.getItem(CASHOUT_ACCOUNT_KEY);
+    if (!raw) return INITIAL_CASHOUT_ACCOUNT;
+    const parsed = JSON.parse(raw);
+    return parsed?.pixKey ? parsed : INITIAL_CASHOUT_ACCOUNT;
+  } catch {
+    return INITIAL_CASHOUT_ACCOUNT;
+  }
+}
+
+export function saveCashoutAccount(account: CashoutAccount) {
+  try {
+    localStorage.setItem(CASHOUT_ACCOUNT_KEY, JSON.stringify(account));
+  } catch (e) {
+    console.error('Failed to save cashout account', e);
+  }
+}
+
+export function loadTheme(): ThemeId {
+  try {
+    const raw = localStorage.getItem(THEME_KEY);
+    if (
+      raw === 'dark-default' ||
+      raw === 'dark-purple' ||
+      raw === 'dark-blue' ||
+      raw === 'dark-emerald' ||
+      raw === 'dark-amber' ||
+      raw === 'dark-oled' ||
+      raw === 'light-clean'
+    ) {
+      return raw;
+    }
+    return 'dark-default';
+  } catch {
+    return 'dark-default';
+  }
+}
+
+export function saveTheme(theme: ThemeId) {
+  try {
+    localStorage.setItem(THEME_KEY, theme);
+  } catch (e) {
+    console.error('Failed to save theme', e);
+  }
+}
+
+export function loadUsers(): UserAccount[] {
+  try {
+    const raw = localStorage.getItem(USERS_KEY);
+    if (!raw) return INITIAL_USERS;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.length ? parsed : INITIAL_USERS;
+  } catch {
+    return INITIAL_USERS;
+  }
+}
+
+export function saveUsers(users: UserAccount[]) {
+  try {
+    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  } catch (e) {
+    console.error('Failed to save users', e);
+  }
+}
+
+export function loadCurrentUser(): UserAccount {
+  try {
+    const raw = localStorage.getItem(CURRENT_USER_KEY);
+    if (!raw) return INITIAL_USERS[0];
+    const parsed = JSON.parse(raw);
+    return parsed?.id ? parsed : INITIAL_USERS[0];
+  } catch {
+    return INITIAL_USERS[0];
+  }
+}
+
+export function saveCurrentUser(user: UserAccount | null) {
+  try {
+    if (user) {
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(CURRENT_USER_KEY);
+    }
+  } catch (e) {
+    console.error('Failed to save current user', e);
+  }
+}
+
 

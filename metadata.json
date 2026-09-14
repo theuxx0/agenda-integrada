@@ -1,6 +1,6 @@
 {
   "name": "Nexus AI — Agenda Inteligente",
-  "description": "ARKIH AI: Agenda inteligente com integrações Google Calendar e Outlook, captura de tarefas via mensageria, roadmap em 6 fases e evolução para modelo SaaS.",
+  "description": "ARKIH: Agenda inteligente corporativa com agendamento de consultas e entregas, despacho para equipes, liquidação financeira e cashout instantâneo via Pix.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

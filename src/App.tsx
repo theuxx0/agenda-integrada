@@ -9,6 +9,13 @@ import {
   Habit,
   FocusSession,
   DailyDebriefReport,
+  TeamMember,
+  TeamBooking,
+  CashoutTransaction,
+  CashoutAccount,
+  BookingStatus,
+  ThemeId,
+  UserAccount,
 } from './types';
 import {
   loadTasks,
@@ -25,7 +32,28 @@ import {
   saveFocusSessions,
   loadDebrief,
   saveDebrief,
+  loadTeamMembers,
+  saveTeamMembers,
+  loadTeamBookings,
+  saveTeamBookings,
+  loadCashoutTransactions,
+  saveCashoutTransactions,
+  loadCashoutAccount,
+  saveCashoutAccount,
+  loadTheme,
+  saveTheme,
+  loadUsers,
+  saveUsers,
+  loadCurrentUser,
+  saveCurrentUser,
 } from './lib/storage';
+import {
+  apiGetUsers,
+  apiGetMe,
+  apiGetUserData,
+  apiSaveUserData,
+  apiLogout,
+} from './lib/api';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
 import { DashboardView } from './components/DashboardView';
@@ -36,10 +64,18 @@ import { ChatView } from './components/ChatView';
 import { AnalyticsView } from './components/AnalyticsView';
 import { IntegrationsView } from './components/IntegrationsView';
 import { RoadmapSaaSView } from './components/RoadmapSaaSView';
+import { TeamsView } from './components/TeamsView';
+import { CashoutView } from './components/CashoutView';
 import { TaskModal } from './components/TaskModal';
+import { ThemeSelectorModal } from './components/ThemeSelectorModal';
+import { MobileMenuDrawer } from './components/MobileMenuDrawer';
+import { AuthModal } from './components/AuthModal';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<TabType>('dashboard');
+  const [currentTheme, setCurrentTheme] = useState<ThemeId>(loadTheme);
+  const [isThemeModalOpen, setIsThemeModalOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [tasks, setTasks] = useState<Task[]>(loadTasks);
   const [currentMode, setCurrentMode] = useState<Mode>(loadMode);
   const [aiMessages, setAiMessages] = useState<ChatMessage[]>(loadChat);
@@ -47,6 +83,14 @@ export default function App() {
   const [habits, setHabits] = useState<Habit[]>(loadHabits);
   const [focusSessions, setFocusSessions] = useState<FocusSession[]>(loadFocusSessions);
   const [debriefReport, setDebriefReport] = useState<DailyDebriefReport | null>(loadDebrief);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(loadTeamMembers);
+  const [teamBookings, setTeamBookings] = useState<TeamBooking[]>(loadTeamBookings);
+  const [cashoutTransactions, setCashoutTransactions] = useState<CashoutTransaction[]>(loadCashoutTransactions);
+  const [cashoutAccount, setCashoutAccount] = useState<CashoutAccount>(loadCashoutAccount);
+  const [users, setUsers] = useState<UserAccount[]>(loadUsers);
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(loadCurrentUser);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authInitialMode, setAuthInitialMode] = useState<'login' | 'register' | 'demo'>('login');
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isAILoading, setIsAILoading] = useState(false);
@@ -81,6 +125,169 @@ export default function App() {
   useEffect(() => {
     saveDebrief(debriefReport);
   }, [debriefReport]);
+
+  useEffect(() => {
+    saveTeamMembers(teamMembers);
+  }, [teamMembers]);
+
+  useEffect(() => {
+    saveTeamBookings(teamBookings);
+  }, [teamBookings]);
+
+  useEffect(() => {
+    saveCashoutTransactions(cashoutTransactions);
+  }, [cashoutTransactions]);
+
+  useEffect(() => {
+    saveCashoutAccount(cashoutAccount);
+  }, [cashoutAccount]);
+
+  useEffect(() => {
+    saveUsers(users);
+  }, [users]);
+
+  useEffect(() => {
+    saveCurrentUser(currentUser);
+  }, [currentUser]);
+
+  // Initial backend synchronization for registered users and active session
+  useEffect(() => {
+    let isMounted = true;
+
+    async function syncWithBackend() {
+      try {
+        // Fetch all registered users from backend
+        const serverUsers = await apiGetUsers();
+        if (isMounted && serverUsers && serverUsers.length > 0) {
+          setUsers(serverUsers);
+        }
+
+        // Check if user has an active session token
+        const me = await apiGetMe();
+        if (isMounted && me) {
+          setCurrentUser(me);
+          // Load this user's private isolated partition from the backend
+          const scoped = await apiGetUserData();
+          if (isMounted && scoped && scoped.data) {
+            if (scoped.data.tasks) setTasks(scoped.data.tasks);
+            if (scoped.data.habits) setHabits(scoped.data.habits);
+            if (scoped.data.focusSessions) setFocusSessions(scoped.data.focusSessions);
+            if (scoped.data.debriefReport !== undefined) setDebriefReport(scoped.data.debriefReport);
+            if (scoped.data.teamBookings) setTeamBookings(scoped.data.teamBookings);
+            if (scoped.data.cashoutTransactions) setCashoutTransactions(scoped.data.cashoutTransactions);
+            if (scoped.data.cashoutAccount) setCashoutAccount(scoped.data.cashoutAccount);
+            if (scoped.data.theme) setCurrentTheme(scoped.data.theme);
+            if (scoped.data.mode) setCurrentMode(scoped.data.mode);
+          }
+        }
+      } catch (err) {
+        console.warn('Sync with backend notice:', err);
+      }
+    }
+
+    syncWithBackend();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Debounced auto-save to backend whenever user's private data changes
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const timer = setTimeout(() => {
+      apiSaveUserData({
+        tasks,
+        habits,
+        focusSessions,
+        debriefReport,
+        teamBookings,
+        cashoutTransactions,
+        cashoutAccount,
+        theme: currentTheme,
+        mode: currentMode,
+      }).catch((err) => console.warn('Falha no auto-save do backend:', err));
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [
+    currentUser,
+    tasks,
+    habits,
+    focusSessions,
+    debriefReport,
+    teamBookings,
+    cashoutTransactions,
+    cashoutAccount,
+    currentTheme,
+    currentMode,
+  ]);
+
+  const handleOpenAuthModal = (mode: 'login' | 'register' | 'demo' = 'login') => {
+    setAuthInitialMode(mode);
+    setIsAuthModalOpen(true);
+  };
+
+  const handleLoginSuccess = async (user: UserAccount) => {
+    setCurrentUser(user);
+    // Fetch this user's isolated data partition from backend to guarantee privacy
+    try {
+      const scoped = await apiGetUserData();
+      if (scoped && scoped.data) {
+        setTasks(scoped.data.tasks || []);
+        setHabits(scoped.data.habits || []);
+        setFocusSessions(scoped.data.focusSessions || []);
+        setDebriefReport(scoped.data.debriefReport || null);
+        setTeamBookings(scoped.data.teamBookings || []);
+        setCashoutTransactions(scoped.data.cashoutTransactions || []);
+        if (scoped.data.cashoutAccount) setCashoutAccount(scoped.data.cashoutAccount);
+        if (scoped.data.theme) setCurrentTheme(scoped.data.theme);
+        if (scoped.data.mode) setCurrentMode(scoped.data.mode);
+      }
+    } catch (err) {
+      console.warn('Erro ao carregar dados isolados do usuário:', err);
+    }
+  };
+
+  const handleRegisterSuccess = async (newUser: UserAccount) => {
+    setUsers((prev) => {
+      const exists = prev.some((u) => u.id === newUser.id);
+      return exists ? prev.map((u) => (u.id === newUser.id ? newUser : u)) : [...prev, newUser];
+    });
+    setCurrentUser(newUser);
+    // Switch to new user's isolated partition
+    try {
+      const scoped = await apiGetUserData();
+      if (scoped && scoped.data) {
+        setTasks(scoped.data.tasks || []);
+        setHabits(scoped.data.habits || []);
+        setFocusSessions(scoped.data.focusSessions || []);
+        setDebriefReport(scoped.data.debriefReport || null);
+        setTeamBookings(scoped.data.teamBookings || []);
+        setCashoutTransactions(scoped.data.cashoutTransactions || []);
+        if (scoped.data.cashoutAccount) setCashoutAccount(scoped.data.cashoutAccount);
+      }
+    } catch (err) {
+      console.warn('Erro ao carregar partição do novo usuário:', err);
+    }
+  };
+
+  const handleLogout = async () => {
+    await apiLogout();
+    setCurrentUser(null);
+    handleOpenAuthModal('login');
+  };
+
+  useEffect(() => {
+    saveTheme(currentTheme);
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    if (currentTheme !== 'light-clean') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [currentTheme]);
 
   const todayIndex = new Date().getDay(); // 0 is Dom, 1 is Seg...
   const streakCount = 4; // Consistent with prototype
@@ -318,6 +525,81 @@ export default function App() {
     }
   };
 
+  // Corporate Team & Booking Handlers
+  const handleAddBooking = (booking: TeamBooking) => {
+    setTeamBookings((prev) => [booking, ...prev]);
+    // Also create a task in the agenda for the user / team schedule
+    const isEntrega = booking.type === 'entrega';
+    const isConsulta = booking.type === 'consulta';
+    const newTask: Task = {
+      id: Date.now(),
+      title: isEntrega
+        ? `[Entrega] ${booking.clientName} — ${booking.assignedMemberName}`
+        : isConsulta
+        ? `[Consulta] ${booking.clientName} — ${booking.assignedMemberName}`
+        : `[Atendimento] ${booking.clientName} — ${booking.assignedMemberName}`,
+      time: booking.time || '14:00',
+      priority: 'high',
+      cat: isConsulta ? 'saude' : 'work',
+      done: booking.status === 'concluido',
+      createdAt: new Date().toISOString(),
+      notes: booking.deliveryAddress || booking.locationOrLink || booking.notes,
+    };
+    setTasks((prev) => [...prev, newTask]);
+  };
+
+  const handleUpdateBookingStatus = (id: string, status: BookingStatus) => {
+    setTeamBookings((prev) =>
+      prev.map((b) => {
+        if (b.id === id) {
+          const updated = { ...b, status };
+          // If marked as concluded, automatically trigger inflow cashout transaction if not already registered!
+          if (status === 'concluido') {
+            setCashoutTransactions((prevTxs) => {
+              const alreadyExists = prevTxs.some((tx) => tx.referenceId === b.id);
+              if (alreadyExists) return prevTxs;
+              const newInflow: CashoutTransaction = {
+                id: `ctx-${Date.now()}`,
+                type: 'inflow_booking',
+                description: `Recebimento de ${b.type === 'consulta' ? 'Consulta' : 'Entrega'} — ${b.clientName}`,
+                amount: b.price,
+                date: new Date().toISOString().split('T')[0],
+                status: 'concluido',
+                referenceId: b.id,
+              };
+              return [newInflow, ...prevTxs];
+            });
+          }
+          return updated;
+        }
+        return b;
+      })
+    );
+  };
+
+  const handleAddCashout = (
+    amount: number,
+    pixKey: string,
+    recipientName: string,
+    bankName: string
+  ) => {
+    const newTx: CashoutTransaction = {
+      id: `ctx-${Date.now()}`,
+      type: 'outflow_cashout',
+      description: `Cashout Instantâneo via Pix para ${recipientName}`,
+      amount,
+      date: new Date().toISOString().split('T')[0],
+      status: 'concluido',
+      pixKey,
+      receiptId: `PIX-ARK-${Math.floor(10000 + Math.random() * 90000)}-2026`,
+    };
+    setCashoutTransactions((prev) => [newTx, ...prev]);
+  };
+
+  const handleUpdateCashoutAccount = (newAccount: CashoutAccount) => {
+    setCashoutAccount(newAccount);
+  };
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-100 font-sans text-slate-900">
       {/* Sidebar Navigation */}
@@ -326,9 +608,13 @@ export default function App() {
         onSelectTab={setCurrentTab}
         currentMode={currentMode}
         onToggleMode={setCurrentMode}
+        currentTheme={currentTheme}
+        onOpenThemeModal={() => setIsThemeModalOpen(true)}
         streaks={streaks}
         streakCount={streakCount}
         todayIndex={todayIndex}
+        currentUser={currentUser}
+        onOpenAuthModal={handleOpenAuthModal}
       />
 
       {/* Main Content Area */}
@@ -336,7 +622,13 @@ export default function App() {
         <TopBar
           currentTab={currentTab}
           currentMode={currentMode}
+          currentTheme={currentTheme}
           onOpenNewTaskModal={handleOpenNewTaskModal}
+          onOpenThemeModal={() => setIsThemeModalOpen(true)}
+          onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
+          currentUser={currentUser}
+          onOpenAuthModal={handleOpenAuthModal}
+          onLogout={handleLogout}
         />
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">
@@ -405,6 +697,27 @@ export default function App() {
             />
           )}
 
+          {currentTab === 'equipes' && (
+            <TeamsView
+              teamMembers={teamMembers}
+              teamBookings={teamBookings}
+              onAddBooking={handleAddBooking}
+              onUpdateBookingStatus={handleUpdateBookingStatus}
+              onNavigateToCashout={() => setCurrentTab('cashout')}
+            />
+          )}
+
+          {currentTab === 'cashout' && (
+            <CashoutView
+              transactions={cashoutTransactions}
+              account={cashoutAccount}
+              teamBookings={teamBookings}
+              onAddCashout={handleAddCashout}
+              onUpdateAccount={handleUpdateCashoutAccount}
+              onNavigateToTeams={() => setCurrentTab('equipes')}
+            />
+          )}
+
           {currentTab === 'analise' && (
             <AnalyticsView
               tasks={tasks}
@@ -432,6 +745,47 @@ export default function App() {
         onSave={handleSaveTask}
         initialTask={editingTask}
         defaultCategory={currentMode || 'study'}
+      />
+
+      {/* Modal for Theme Palette */}
+      <ThemeSelectorModal
+        isOpen={isThemeModalOpen}
+        onClose={() => setIsThemeModalOpen(false)}
+        currentTheme={currentTheme}
+        onSelectTheme={(theme) => setCurrentTheme(theme)}
+      />
+
+      {/* Mobile Navigation Drawer */}
+      <MobileMenuDrawer
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+        currentTab={currentTab}
+        onSelectTab={setCurrentTab}
+        currentMode={currentMode}
+        onToggleMode={setCurrentMode}
+        currentTheme={currentTheme}
+        onOpenThemeModal={() => setIsThemeModalOpen(true)}
+        streaks={streaks}
+        streakCount={streakCount}
+        todayIndex={todayIndex}
+        onOpenNewTaskModal={handleOpenNewTaskModal}
+        pendingTasksCount={tasks.filter((t) => !t.done).length}
+        currentUser={currentUser}
+        onOpenAuthModal={handleOpenAuthModal}
+        onLogout={handleLogout}
+      />
+
+      {/* Modal for Authentication & User Registration */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        currentUser={currentUser}
+        users={users}
+        onLogin={handleLoginSuccess}
+        onRegister={handleRegisterSuccess}
+        onLoginSuccess={handleLoginSuccess}
+        onRegisterSuccess={handleRegisterSuccess}
+        initialMode={authInitialMode}
       />
     </div>
   );

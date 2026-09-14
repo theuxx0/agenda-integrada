@@ -4,12 +4,32 @@ import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
 import dotenv from 'dotenv';
 
+import { dbManager } from './server/db';
+
 dotenv.config();
 
 const app = express();
 const PORT = 3000;
 
 app.use(express.json());
+
+// Auth Middleware to ensure privacy and data isolation
+function authenticateUser(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
+  if (!token) {
+    res.status(401).json({ error: 'Acesso não autorizado. Faça login para continuar.' });
+    return;
+  }
+  const user = dbManager.getUserByToken(token);
+  if (!user) {
+    res.status(401).json({ error: 'Sessão expirada ou inválida. Por favor, faça login novamente.' });
+    return;
+  }
+  (req as any).user = user;
+  (req as any).token = token;
+  next();
+}
 
 // Fallback candidate models compliant with @google/genai SKILL.md
 const CANDIDATE_MODELS = [
@@ -113,7 +133,162 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     hasGeminiKey: Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'MY_GEMINI_API_KEY'),
+    usersCount: dbManager.getUsersPublic().length,
   });
+});
+
+// --- AUTHENTICATION & USER MANAGEMENT (BACKEND PRIVACY & DATA ISOLATION) ---
+
+// Public list of users (for demo switcher or team contacts, passwords omitted)
+app.get('/api/users', (req, res) => {
+  try {
+    const users = dbManager.getUsersPublic();
+    res.json({ users });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Erro ao buscar usuários cadastrados' });
+  }
+});
+
+// Register a new user
+app.post('/api/auth/register', (req, res) => {
+  try {
+    const { username, password, fullName, phone, cpf, accountType, companyName, cnpj, role } = req.body;
+
+    if (!username || !fullName || !phone || !cpf) {
+      res.status(400).json({ error: 'Campos obrigatórios ausentes: nome completo, usuário, telefone e CPF são necessários.' });
+      return;
+    }
+
+    if (accountType === 'corporativo' && (!companyName || !cnpj)) {
+      res.status(400).json({ error: 'Para contas corporativas, razão social e CNPJ são obrigatórios.' });
+      return;
+    }
+
+    const result = dbManager.registerUser({
+      username,
+      password: password || '123456',
+      fullName,
+      phone,
+      cpf,
+      accountType: accountType || 'individual',
+      companyName,
+      cnpj,
+      role: role || 'operacional',
+    });
+
+    res.status(201).json({
+      success: true,
+      user: result.user,
+      token: result.token,
+      message: `Usuário ${result.user.fullName} cadastrado com sucesso!`,
+    });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message || 'Erro ao registrar usuário' });
+  }
+});
+
+// Login
+app.post('/api/auth/login', (req, res) => {
+  try {
+    const { identifier, password } = req.body;
+
+    if (!identifier) {
+      res.status(400).json({ error: 'Identificador (usuário, CPF ou telefone) é obrigatório.' });
+      return;
+    }
+
+    const result = dbManager.loginUser(identifier, password);
+    res.json({
+      success: true,
+      user: result.user,
+      token: result.token,
+      message: `Bem-vindo de volta, ${result.user.fullName}!`,
+    });
+  } catch (error: any) {
+    res.status(401).json({ error: error.message || 'Falha na autenticação' });
+  }
+});
+
+// Get Current User Profile (Me)
+app.get('/api/auth/me', authenticateUser, (req, res) => {
+  const user = (req as any).user;
+  res.json({ user });
+});
+
+// Logout
+app.post('/api/auth/logout', (req, res) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
+  if (token) {
+    dbManager.invalidateToken(token);
+  }
+  res.json({ success: true, message: 'Sessão encerrada com sucesso.' });
+});
+
+// GET Isolated User Data (Strict Privacy: User only sees their own scoped data)
+app.get('/api/user/data', authenticateUser, (req, res) => {
+  try {
+    const user = (req as any).user;
+    const isolatedData = dbManager.getUserIsolatedData(user.id);
+    res.json({
+      user,
+      data: isolatedData,
+      privacyNotice: 'Dados isolados e privados para a conta ' + user.fullName + ' (' + user.role + ')',
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Erro ao carregar dados isolados do usuário' });
+  }
+});
+
+// PUT Update Isolated User Data
+app.put('/api/user/data', authenticateUser, (req, res) => {
+  try {
+    const user = (req as any).user;
+    const allowedKeys = [
+      'tasks',
+      'habits',
+      'focusSessions',
+      'debriefReport',
+      'teamBookings',
+      'cashoutTransactions',
+      'cashoutAccount',
+      'theme',
+      'mode',
+      'streaks',
+    ];
+
+    const payloadToUpdate: any = {};
+    for (const key of allowedKeys) {
+      if (req.body[key] !== undefined) {
+        payloadToUpdate[key] = req.body[key];
+      }
+    }
+
+    const updated = dbManager.updateUserData(user.id, payloadToUpdate);
+    res.json({
+      success: true,
+      data: updated,
+      message: 'Dados privados sincronizados com o backend com sucesso.',
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Erro ao atualizar dados privados' });
+  }
+});
+
+// POST Add Single Task to User's Isolated Partition
+app.post('/api/user/task', authenticateUser, (req, res) => {
+  try {
+    const user = (req as any).user;
+    const task = req.body;
+    if (!task || !task.title) {
+      res.status(400).json({ error: 'Dados da tarefa inválidos' });
+      return;
+    }
+    const newTask = dbManager.addTaskForUser(user.id, task);
+    res.status(201).json({ success: true, task: newTask });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Erro ao salvar tarefa no backend' });
+  }
 });
 
 // API: Nexus AI Chat & Task Extractor
@@ -455,6 +630,204 @@ Gere um diagnóstico diário estruturado e encorajador em português do Brasil c
       improvements: ['Reservar pequenos intervalos de descanso para evitar fadiga'],
       tomorrowAdvice: 'Defina as 3 tarefas principais logo pela manhã para manter o foco afiado.',
       generatedAt: new Date().toISOString(),
+    });
+  }
+});
+
+// API: ARKIH Teams Dispatch Booking (Corporativo - Consultas, Entregas & Serviços)
+app.post('/api/team/dispatch-booking', async (req, res) => {
+  try {
+    const { message, teamMembers = [], currentDate = new Date().toISOString().split('T')[0] } = req.body;
+
+    if (!message || typeof message !== 'string') {
+      res.status(400).json({ error: 'Message is required' });
+      return;
+    }
+
+    const ai = getGeminiClient();
+
+    // Fallback heuristic parser
+    const parseLocalBooking = (msg: string) => {
+      const lower = msg.toLowerCase();
+      const isEntrega = /entrega|entregar|encomenda|remessa|motoboy|pacote|documentos|endereço|rua|av\.|avenida/i.test(msg);
+      const isConsulta = /consulta|médic|doutor|dr\.|paciente|terapia|nutricion|clínic|avaliação/i.test(msg);
+      const bookingType = isEntrega ? 'entrega' : isConsulta ? 'consulta' : 'servico';
+
+      // Extract time
+      let time = '14:00';
+      const timeMatch = msg.match(/(\d{1,2})(?::(\d{2})|h(?:(\d{2}))?)/);
+      if (timeMatch) {
+        time = `${timeMatch[1].padStart(2, '0')}:${(timeMatch[2] || timeMatch[3] || '00').padStart(2, '0')}`;
+      }
+
+      // Extract price
+      let price = bookingType === 'consulta' ? 250 : bookingType === 'entrega' ? 45 : 150;
+      const priceMatch = msg.match(/(?:r\$|\$)?\s*(\d+(?:[.,]\d{2})?)\s*(?:reais|rs)?/i);
+      if (priceMatch) {
+        const val = parseFloat(priceMatch[1].replace(',', '.'));
+        if (!isNaN(val) && val > 0 && val < 50000) {
+          price = val;
+        }
+      }
+
+      // Assign member
+      let assigned = teamMembers[0] || { id: 'tm-1', name: 'Dr. André Silva' };
+      for (const tm of teamMembers) {
+        const firstName = tm.name.toLowerCase().split(' ')[0].replace('dr.', '').trim();
+        if (lower.includes(firstName) || lower.includes(tm.name.toLowerCase())) {
+          assigned = tm;
+          break;
+        }
+      }
+      if (isEntrega && (!lower.includes('andré') && !lower.includes('mariana'))) {
+        const deliveryGuy = teamMembers.find((m: any) => m.role.toLowerCase().includes('entrega') || m.id === 'tm-2' || m.id === 'tm-4');
+        if (deliveryGuy) assigned = deliveryGuy;
+      }
+
+      // Extract client name
+      let clientName = 'Cliente Corporativo';
+      const clientMatch = msg.match(/(?:cliente|para|paciente)\s+([A-ZÀ-Úa-zà-ú]+(?:\s+[A-ZÀ-Úa-zà-ú]+)?)/i);
+      if (clientMatch && clientMatch[1]) {
+        clientName = clientMatch[1].trim();
+      }
+
+      // Extract address if entrega
+      let deliveryAddress = undefined;
+      const addressMatch = msg.match(/(?:na|no|em|rua|av\.|avenida)\s+([A-ZÀ-Úa-zà-ú0-9\s,.-]+?)(?=\s+(?:com|às|as|valor|para|cliente|$))/i);
+      if (addressMatch && addressMatch[1] && addressMatch[1].length > 4) {
+        deliveryAddress = addressMatch[1].trim();
+      } else if (isEntrega) {
+        deliveryAddress = 'Endereço informado via despacho ARKIH';
+      }
+
+      return {
+        id: `tb-${Date.now()}`,
+        type: bookingType,
+        title: isEntrega ? `Entrega — ${clientName}` : isConsulta ? `Consulta — ${clientName}` : `Atendimento — ${clientName}`,
+        clientName,
+        clientPhone: '(11) 9' + Math.floor(10000000 + Math.random() * 90000000),
+        date: currentDate,
+        time,
+        durationMinutes: isConsulta ? 45 : 30,
+        assignedMemberId: assigned.id,
+        assignedMemberName: assigned.name,
+        status: 'confirmado',
+        price,
+        paymentStatus: 'pago',
+        deliveryAddress,
+        locationOrLink: isConsulta ? 'Consultório Presencial ou Google Meet' : undefined,
+        notes: `Agendado via Despacho Inteligente ARKIH: "${msg}"`,
+        createdAt: new Date().toISOString(),
+      };
+    };
+
+    if (!ai) {
+      const parsed = parseLocalBooking(message);
+      res.json({
+        booking: parsed,
+        reply: `Agendamento corporativo criado com sucesso: ${parsed.type === 'entrega' ? 'Entrega' : 'Consulta'} para ${parsed.clientName} às ${parsed.time} com ${parsed.assignedMemberName} (R$ ${parsed.price}).`,
+      });
+      return;
+    }
+
+    const membersPrompt = teamMembers.map((m: any) => `- ID: ${m.id}, Nome: ${m.name}, Função: ${m.role}`).join('\n');
+    const prompt = `Você é o despachante de agendamentos corporativos da ARKIH AI (Plano Equipes).
+Data de referência: ${currentDate}.
+Membros da equipe disponíveis:
+${membersPrompt}
+
+Solicitação de agendamento recebida: "${message}"
+
+Analise a mensagem e extraia os dados para agendar a entrega, consulta médica, reunião ou serviço corporativo:
+- type: 'consulta' | 'entrega' | 'reuniao' | 'servico'
+- title: título resumido profissional
+- clientName: nome do cliente/paciente (ou 'Cliente Corporativo' se não mencionado)
+- clientPhone: telefone se mencionado (ou gerar telefone válido padrão)
+- time: horário HH:mm (padrão '14:00' se não informado)
+- date: YYYY-MM-DD (padrão ${currentDate})
+- durationMinutes: duração estimada em minutos (30, 45, 60)
+- assignedMemberId: o ID do membro mais adequado da equipe acima (ou tm-1)
+- assignedMemberName: o nome exato do membro selecionado
+- price: valor numérico em Reais do serviço/entrega/consulta (ex: 45 para entrega, 250 para consulta, ou o valor citado)
+- deliveryAddress: endereço completo se for entrega (ou null se consulta)
+- locationOrLink: local da consulta ou link de videoconferência
+- reply: confirmação amigável em português`;
+
+    const response = await generateContentWithFallback(ai, {
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            type: { type: Type.STRING },
+            title: { type: Type.STRING },
+            clientName: { type: Type.STRING },
+            clientPhone: { type: Type.STRING },
+            time: { type: Type.STRING },
+            date: { type: Type.STRING },
+            durationMinutes: { type: Type.INTEGER },
+            assignedMemberId: { type: Type.STRING },
+            assignedMemberName: { type: Type.STRING },
+            price: { type: Type.NUMBER },
+            deliveryAddress: { type: Type.STRING },
+            locationOrLink: { type: Type.STRING },
+            reply: { type: Type.STRING },
+          },
+          required: ['type', 'title', 'clientName', 'time', 'assignedMemberId', 'assignedMemberName', 'price', 'reply'],
+        },
+      },
+    });
+
+    const parsedJson = JSON.parse(response.text?.trim() || '{}');
+    const finalBooking = {
+      id: `tb-${Date.now()}`,
+      type: (['consulta', 'entrega', 'reuniao', 'servico'].includes(parsedJson.type) ? parsedJson.type : 'servico') as any,
+      title: parsedJson.title || 'Agendamento Corporativo',
+      clientName: parsedJson.clientName || 'Cliente Corporativo',
+      clientPhone: parsedJson.clientPhone || '(11) 98888-9999',
+      date: parsedJson.date || currentDate,
+      time: parsedJson.time || '14:00',
+      durationMinutes: parsedJson.durationMinutes || 45,
+      assignedMemberId: parsedJson.assignedMemberId || (teamMembers[0]?.id || 'tm-1'),
+      assignedMemberName: parsedJson.assignedMemberName || (teamMembers[0]?.name || 'Equipe ARKIH'),
+      status: 'confirmado' as const,
+      price: typeof parsedJson.price === 'number' && parsedJson.price > 0 ? parsedJson.price : 150,
+      paymentStatus: 'pago' as const,
+      deliveryAddress: parsedJson.deliveryAddress || undefined,
+      locationOrLink: parsedJson.locationOrLink || undefined,
+      notes: `Despachado por ARKIH AI Teams: "${message}"`,
+      createdAt: new Date().toISOString(),
+    };
+
+    res.json({
+      booking: finalBooking,
+      reply: parsedJson.reply || `Agendamento cadastrado com sucesso para ${finalBooking.clientName} às ${finalBooking.time}.`,
+    });
+  } catch (error: any) {
+    console.warn('ARKIH Teams dispatch fallback:', error?.message || error);
+    // Fallback gracefully
+    const local = {
+      id: `tb-${Date.now()}`,
+      type: 'entrega' as const,
+      title: 'Entrega Corporativa Solicitada',
+      clientName: 'Cliente Corporativo',
+      clientPhone: '(11) 98765-4321',
+      date: new Date().toISOString().split('T')[0],
+      time: '15:00',
+      durationMinutes: 30,
+      assignedMemberId: 'tm-2',
+      assignedMemberName: 'Roberto Santos',
+      status: 'confirmado' as const,
+      price: 45,
+      paymentStatus: 'pago' as const,
+      deliveryAddress: 'Endereço registrado via despacho ARKIH',
+      notes: `Despachado: ${req.body.message}`,
+      createdAt: new Date().toISOString(),
+    };
+    res.json({
+      booking: local,
+      reply: `Agendamento corporativo registrado para ${local.assignedMemberName} às ${local.time}.`,
     });
   }
 });

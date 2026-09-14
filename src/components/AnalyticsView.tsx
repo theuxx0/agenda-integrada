@@ -167,7 +167,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
 • Hábitos Ativos: ${habits.length} monitorados
 
 📝 *Tarefas:*
-${tasks.map((t) => `${t.done ? '✅' : '⏳'} [${t.time}] ${t.title} (${t.priority.toUpperCase()})`).join('\n')}
+${(tasks || []).map((t) => `${t.done ? '✅' : '⏳'} [${t.time}] ${t.title} (${t.priority.toUpperCase()})`).join('\n')}
 
 💡 *Diagnóstico Nexus AI:*
 ${debriefReport ? debriefReport.summary : 'Rotina em ritmo acelerado com foco nas prioridades essenciais.'}

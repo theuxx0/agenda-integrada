@@ -1,1 +1,385 @@
 @import "tailwindcss";
+
+/* -----------------------------------------------------------
+   ARKIH THEME PALETTE ENGINE
+   Supports:
+   - dark-default: Escuro Padrão (Grafite & Ardósia)
+   - dark-purple: Escuro & Roxo (Violeta Neon & Obsidiana)
+   - dark-blue: Escuro & Azul (Oceano Profundo & Ciano)
+   - dark-emerald: Escuro & Esmeralda (Cyber Matrix & Menta)
+   - dark-amber: Escuro & Âmbar (Crepúsculo & Ouro)
+   - dark-oled: Escuro OLED Puro (Preto Absoluto & Titânio)
+   - light-clean: Claro Minimalista (Clean Slate & Branco Neve)
+   ----------------------------------------------------------- */
+
+:root,
+[data-theme="light-clean"] {
+  --app-bg: #f8fafc;
+  --app-surface: #ffffff;
+  --app-surface-subtle: #f1f5f9;
+  --app-surface-hover: #e2e8f0;
+  --app-border: #e2e8f0;
+  --app-border-strong: #cbd5e1;
+  --app-text-primary: #0f172a;
+  --app-text-secondary: #475569;
+  --app-text-muted: #94a3b8;
+  --app-accent: #4f46e5;
+  --app-accent-hover: #4338ca;
+  --app-accent-light: #e0e7ff;
+  --app-accent-text: #4338ca;
+  --app-sidebar-bg: rgba(248, 250, 252, 0.92);
+  --app-topbar-bg: rgba(255, 255, 255, 0.88);
+  --app-modal-bg: #ffffff;
+  --app-input-bg: #f8fafc;
+  --app-glow: rgba(79, 70, 229, 0.15);
+  color-scheme: light;
+}
+
+[data-theme="dark-default"] {
+  --app-bg: #0b0f19;
+  --app-surface: #111827;
+  --app-surface-subtle: #172236;
+  --app-surface-hover: #1e2d47;
+  --app-border: #1e293b;
+  --app-border-strong: #334155;
+  --app-text-primary: #f8fafc;
+  --app-text-secondary: #94a3b8;
+  --app-text-muted: #64748b;
+  --app-accent: #6366f1;
+  --app-accent-hover: #4f46e5;
+  --app-accent-light: rgba(99, 102, 241, 0.2);
+  --app-accent-text: #a5b4fc;
+  --app-sidebar-bg: #0c1220;
+  --app-topbar-bg: rgba(12, 18, 32, 0.9);
+  --app-modal-bg: #111827;
+  --app-input-bg: #172236;
+  --app-glow: rgba(99, 102, 241, 0.25);
+  color-scheme: dark;
+}
+
+[data-theme="dark-purple"] {
+  --app-bg: #090514;
+  --app-surface: #120a24;
+  --app-surface-subtle: #1a1033;
+  --app-surface-hover: #291a4e;
+  --app-border: #29184d;
+  --app-border-strong: #3f2477;
+  --app-text-primary: #fbf7ff;
+  --app-text-secondary: #c4b5fd;
+  --app-text-muted: #8b5cf6;
+  --app-accent: #a855f7;
+  --app-accent-hover: #9333ea;
+  --app-accent-light: rgba(168, 85, 247, 0.24);
+  --app-accent-text: #e9d5ff;
+  --app-sidebar-bg: #0d071c;
+  --app-topbar-bg: rgba(13, 7, 28, 0.9);
+  --app-modal-bg: #120a24;
+  --app-input-bg: #1a1033;
+  --app-glow: rgba(168, 85, 247, 0.3);
+  color-scheme: dark;
+}
+
+[data-theme="dark-blue"] {
+  --app-bg: #030c18;
+  --app-surface: #081628;
+  --app-surface-subtle: #0e223d;
+  --app-surface-hover: #15345c;
+  --app-border: #133156;
+  --app-border-strong: #1e477a;
+  --app-text-primary: #f0f9ff;
+  --app-text-secondary: #7dd3fc;
+  --app-text-muted: #38bdf8;
+  --app-accent: #0ea5e9;
+  --app-accent-hover: #0284c7;
+  --app-accent-light: rgba(14, 165, 233, 0.22);
+  --app-accent-text: #bae6fd;
+  --app-sidebar-bg: #051020;
+  --app-topbar-bg: rgba(5, 16, 32, 0.9);
+  --app-modal-bg: #081628;
+  --app-input-bg: #0e223d;
+  --app-glow: rgba(14, 165, 233, 0.3);
+  color-scheme: dark;
+}
+
+[data-theme="dark-emerald"] {
+  --app-bg: #030f0a;
+  --app-surface: #071c13;
+  --app-surface-subtle: #0d2a1d;
+  --app-surface-hover: #133d2a;
+  --app-border: #143d2b;
+  --app-border-strong: #1d583e;
+  --app-text-primary: #ecfdf5;
+  --app-text-secondary: #6ee7b7;
+  --app-text-muted: #34d399;
+  --app-accent: #10b981;
+  --app-accent-hover: #059669;
+  --app-accent-light: rgba(16, 185, 129, 0.22);
+  --app-accent-text: #a7f3d0;
+  --app-sidebar-bg: #04150e;
+  --app-topbar-bg: rgba(4, 21, 14, 0.9);
+  --app-modal-bg: #071c13;
+  --app-input-bg: #0d2a1d;
+  --app-glow: rgba(16, 185, 129, 0.3);
+  color-scheme: dark;
+}
+
+[data-theme="dark-amber"] {
+  --app-bg: #0e0905;
+  --app-surface: #181108;
+  --app-surface-subtle: #261a0d;
+  --app-surface-hover: #372613;
+  --app-border: #382714;
+  --app-border-strong: #543b1f;
+  --app-text-primary: #fffbeb;
+  --app-text-secondary: #fde68a;
+  --app-text-muted: #fbbf24;
+  --app-accent: #f59e0b;
+  --app-accent-hover: #d97706;
+  --app-accent-light: rgba(245, 158, 11, 0.22);
+  --app-accent-text: #fef3c7;
+  --app-sidebar-bg: #120c06;
+  --app-topbar-bg: rgba(18, 12, 6, 0.9);
+  --app-modal-bg: #181108;
+  --app-input-bg: #261a0d;
+  --app-glow: rgba(245, 158, 11, 0.3);
+  color-scheme: dark;
+}
+
+[data-theme="dark-oled"] {
+  --app-bg: #000000;
+  --app-surface: #0a0a0a;
+  --app-surface-subtle: #141414;
+  --app-surface-hover: #222222;
+  --app-border: #1f1f1f;
+  --app-border-strong: #333333;
+  --app-text-primary: #ffffff;
+  --app-text-secondary: #d4d4d4;
+  --app-text-muted: #888888;
+  --app-accent: #f5f5f5;
+  --app-accent-hover: #e5e5e5;
+  --app-accent-light: rgba(255, 255, 255, 0.16);
+  --app-accent-text: #ffffff;
+  --app-sidebar-bg: #040404;
+  --app-topbar-bg: rgba(0, 0, 0, 0.92);
+  --app-modal-bg: #0a0a0a;
+  --app-input-bg: #141414;
+  --app-glow: rgba(255, 255, 255, 0.2);
+  color-scheme: dark;
+}
+
+/* ============================================================
+   APPLY DARK THEME VARIABLES ACROSS CORE INTERFACES
+   ============================================================ */
+
+[data-theme^="dark"] {
+  background-color: var(--app-bg);
+  color: var(--app-text-primary);
+}
+
+/* App Background Containers */
+[data-theme^="dark"] .bg-slate-100 {
+  background-color: var(--app-bg) !important;
+}
+
+[data-theme^="dark"] .bg-slate-50 {
+  background-color: var(--app-surface-subtle) !important;
+}
+
+[data-theme^="dark"] .bg-slate-50\/40,
+[data-theme^="dark"] .bg-slate-50\/60,
+[data-theme^="dark"] .bg-slate-50\/70,
+[data-theme^="dark"] .bg-slate-50\/80,
+[data-theme^="dark"] .bg-slate-100\/50,
+[data-theme^="dark"] .bg-slate-100\/70,
+[data-theme^="dark"] .bg-slate-100\/80 {
+  background-color: var(--app-surface-subtle) !important;
+}
+
+[data-theme^="dark"] .bg-slate-200,
+[data-theme^="dark"] .bg-slate-300 {
+  background-color: var(--app-border-strong) !important;
+}
+
+/* Card & Surface Overrides */
+[data-theme^="dark"] .bg-white {
+  background-color: var(--app-surface) !important;
+}
+
+[data-theme^="dark"] .bg-white\/90,
+[data-theme^="dark"] .bg-white\/80 {
+  background-color: var(--app-topbar-bg) !important;
+}
+
+/* Sidebar & Mobile Drawer Specific */
+[data-theme^="dark"] aside,
+[data-theme^="dark"] #mobile-navigation-drawer {
+  background-color: var(--app-sidebar-bg) !important;
+  border-color: var(--app-border) !important;
+}
+
+/* Topbar Specific */
+[data-theme^="dark"] header {
+  background-color: var(--app-topbar-bg) !important;
+  border-color: var(--app-border) !important;
+}
+
+/* Hover States */
+[data-theme^="dark"] .hover\:bg-white:hover {
+  background-color: var(--app-surface-hover) !important;
+}
+
+[data-theme^="dark"] .hover\:bg-slate-50:hover,
+[data-theme^="dark"] .hover\:bg-slate-100:hover,
+[data-theme^="dark"] .hover\:bg-slate-200\/60:hover,
+[data-theme^="dark"] .hover\:bg-slate-200:hover {
+  background-color: var(--app-surface-hover) !important;
+}
+
+/* Typography Colors */
+[data-theme^="dark"] .text-slate-900,
+[data-theme^="dark"] .text-slate-800 {
+  color: var(--app-text-primary) !important;
+}
+
+[data-theme^="dark"] .text-slate-700,
+[data-theme^="dark"] .text-slate-600 {
+  color: var(--app-text-secondary) !important;
+}
+
+[data-theme^="dark"] .text-slate-500,
+[data-theme^="dark"] .text-slate-400 {
+  color: var(--app-text-muted) !important;
+}
+
+/* Borders */
+[data-theme^="dark"] .border-slate-200,
+[data-theme^="dark"] .border-slate-200\/80,
+[data-theme^="dark"] .border-slate-200\/60,
+[data-theme^="dark"] .border-slate-100 {
+  border-color: var(--app-border) !important;
+}
+
+[data-theme^="dark"] .border-slate-300 {
+  border-color: var(--app-border-strong) !important;
+}
+
+/* Form Inputs, Selects and Textareas */
+[data-theme^="dark"] input,
+[data-theme^="dark"] select,
+[data-theme^="dark"] textarea {
+  background-color: var(--app-input-bg) !important;
+  color: var(--app-text-primary) !important;
+  border-color: var(--app-border) !important;
+}
+
+[data-theme^="dark"] input::placeholder,
+[data-theme^="dark"] textarea::placeholder {
+  color: var(--app-text-muted) !important;
+}
+
+/* Primary Accents & Active Nav Items */
+[data-theme^="dark"] .bg-indigo-600 {
+  background-color: var(--app-accent) !important;
+}
+
+[data-theme^="dark"] .hover\:bg-indigo-700:hover,
+[data-theme^="dark"] .active\:bg-indigo-800:active {
+  background-color: var(--app-accent-hover) !important;
+}
+
+[data-theme^="dark"] .text-indigo-600 {
+  color: var(--app-accent) !important;
+}
+
+[data-theme^="dark"] .text-indigo-700 {
+  color: var(--app-accent-text) !important;
+}
+
+[data-theme^="dark"] .bg-indigo-100,
+[data-theme^="dark"] .bg-indigo-50,
+[data-theme^="dark"] .bg-indigo-50\/70,
+[data-theme^="dark"] .bg-indigo-50\/80 {
+  background-color: var(--app-accent-light) !important;
+  border-color: var(--app-border) !important;
+}
+
+[data-theme^="dark"] .border-indigo-100,
+[data-theme^="dark"] .border-indigo-200 {
+  border-color: var(--app-border) !important;
+}
+
+/* Active navigation badge */
+[data-theme^="dark"] .bg-indigo-500 {
+  background-color: var(--app-accent-hover) !important;
+}
+
+/* OLED Special Case: On pure white accent buttons, text must be dark */
+[data-theme="dark-oled"] .bg-indigo-600,
+[data-theme="dark-oled"] button.bg-indigo-600 span,
+[data-theme="dark-oled"] button.bg-indigo-600 svg {
+  color: #050505 !important;
+}
+
+/* Modals & Dialogs */
+[data-theme^="dark"] .bg-white.rounded-2xl,
+[data-theme^="dark"] .bg-white.rounded-3xl,
+[data-theme^="dark"] #task-modal-container {
+  background-color: var(--app-modal-bg) !important;
+  border-color: var(--app-border) !important;
+}
+
+/* Category & Status Badges in Dark Mode */
+[data-theme^="dark"] .bg-blue-50 {
+  background-color: rgba(59, 130, 246, 0.16) !important;
+  color: #93c5fd !important;
+  border-color: rgba(59, 130, 246, 0.28) !important;
+}
+
+[data-theme^="dark"] .bg-emerald-50 {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+  color: #6ee7b7 !important;
+  border-color: rgba(16, 185, 129, 0.28) !important;
+}
+
+[data-theme^="dark"] .bg-orange-50 {
+  background-color: rgba(249, 115, 22, 0.16) !important;
+  color: #fdba74 !important;
+  border-color: rgba(249, 115, 22, 0.28) !important;
+}
+
+[data-theme^="dark"] .bg-purple-50 {
+  background-color: rgba(168, 85, 247, 0.16) !important;
+  color: #d8b4fe !important;
+  border-color: rgba(168, 85, 247, 0.28) !important;
+}
+
+[data-theme^="dark"] .bg-rose-50 {
+  background-color: rgba(244, 63, 94, 0.16) !important;
+  color: #fda4af !important;
+  border-color: rgba(244, 63, 94, 0.28) !important;
+}
+
+[data-theme^="dark"] .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.16) !important;
+  color: #fde68a !important;
+  border-color: rgba(245, 158, 11, 0.28) !important;
+}
+
+/* Custom Scrollbars */
+[data-theme^="dark"] ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+[data-theme^="dark"] ::-webkit-scrollbar-track {
+  background: var(--app-bg);
+}
+
+[data-theme^="dark"] ::-webkit-scrollbar-thumb {
+  background: var(--app-border-strong);
+  border-radius: 4px;
+}
+
+[data-theme^="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--app-accent);
+}

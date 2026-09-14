@@ -141,14 +141,14 @@ export const RoadmapSaaSView: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-indigo-100 text-indigo-700">
-                Slide 10
+                Planos & Recursos
               </span>
               <h2 className="text-base font-bold text-slate-900">
-                10. Evolução para SaaS
+                Planos de Assinatura & Níveis de Acesso
               </h2>
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              Modelo pensado para começar simples e escalar.
+              Escolha a modalidade ideal para o seu perfil pessoal ou para a sua empresa.
             </p>
           </div>
 
@@ -348,7 +348,7 @@ export const RoadmapSaaSView: React.FC = () => {
             <li className="flex items-start gap-2">
               <span className="text-indigo-400 font-bold">•</span>
               <span>
-                <strong>Meta:</strong> transformar o <strong>ARKIH AI</strong> em uma plataforma de produtividade pessoal e profissional.
+                <strong>Meta:</strong> transformar o <strong>ARKIH</strong> em uma plataforma de produtividade pessoal e profissional.
               </span>
             </li>
           </ul>

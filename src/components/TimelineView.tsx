@@ -193,7 +193,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                       <span>+ Espaço livre — clique para agendar</span>
                     </div>
                   ) : (
-                    slotTasks.map((task) => {
+                    (slotTasks || []).map((task) => {
                       const color = categoryColor[task.cat] || categoryColor.general;
                       return (
                         <div
@@ -384,7 +384,7 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
               className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 outline-none focus:border-indigo-500 cursor-pointer"
             >
               <option value="">Foco geral sem tarefa específica</option>
-              {tasks
+              {(tasks || [])
                 .filter((t) => !t.done)
                 .map((t) => (
                   <option key={t.id} value={t.id}>

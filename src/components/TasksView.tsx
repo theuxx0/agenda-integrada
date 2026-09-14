@@ -178,7 +178,7 @@ export const TasksView: React.FC<TasksViewProps> = ({
 
         {filteredTasks.length > 0 ? (
           <div className="flex flex-col gap-2">
-            {filteredTasks.map((task) => (
+            {(filteredTasks || []).map((task) => (
               <TaskItem
                 key={task.id}
                 task={task}

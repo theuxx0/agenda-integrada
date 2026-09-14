@@ -86,7 +86,7 @@ export const ChatView: React.FC<ChatViewProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-slate-900">Nexus AI Assistente</h2>
+              <h2 className="text-sm font-bold text-slate-900">Assistente ARKIH</h2>
               <span className="text-[10px] font-bold bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full border border-indigo-200/60">
                 Gemini 3.8 Flash
               </span>
@@ -111,11 +111,11 @@ export const ChatView: React.FC<ChatViewProps> = ({
         <div className="bg-indigo-50/70 border border-indigo-200/70 rounded-xl p-3.5 text-xs text-indigo-950 flex items-start gap-3">
           <Lightbulb className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
           <div className="flex-1 leading-relaxed">
-            <span className="font-semibold text-indigo-900">Como funciona o MVP 2:</span> Digite compromissos naturalmente (ex: <i>"Sexta tenho dentista às 14h"</i> ou <i>"Treino de musculação hoje às 19h"</i>). O Nexus AI extrai data, horário e categoria e prepara ou agenda automaticamente para você!
+            <span className="font-semibold text-indigo-900">Como funciona:</span> Digite compromissos naturalmente (ex: <i>"Sexta tenho dentista às 14h"</i> ou <i>"Treino de musculação hoje às 19h"</i>). O ARKIH extrai data, horário e categoria e prepara ou agenda automaticamente para você!
           </div>
         </div>
 
-        {messages.map((msg) => (
+        {(messages || []).map((msg) => (
           <div
             key={msg.id}
             className={`flex gap-3 max-w-[85%] ${

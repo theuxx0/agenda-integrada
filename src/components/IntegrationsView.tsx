@@ -48,10 +48,10 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
     let icsContent = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
-      'PRODID:-//ARKIH AI//Agenda Inteligente//PT',
+      'PRODID:-//ARKIH//Agenda Inteligente//PT',
       'CALSCALE:GREGORIAN',
       'METHOD:PUBLISH',
-      'X-WR-CALNAME:ARKIH AI - Agenda & Eventos',
+      'X-WR-CALNAME:ARKIH - Agenda & Eventos',
     ];
 
     tasks.forEach((task) => {
@@ -61,12 +61,12 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
       const endH = String((parseInt(startH, 10) + 1) % 24).padStart(2, '0');
 
       icsContent.push('BEGIN:VEVENT');
-      icsContent.push(`UID:arkih-${task.id}-${Date.now()}@arkih.ai`);
+      icsContent.push(`UID:arkih-${task.id}-${Date.now()}@arkih.app`);
       icsContent.push(`DTSTAMP:${dateStamp}T${startH}${startM}00Z`);
       icsContent.push(`DTSTART:${dateStamp}T${startH}${startM}00`);
       icsContent.push(`DTEND:${dateStamp}T${endH}${startM}00`);
       icsContent.push(`SUMMARY:${task.title}`);
-      icsContent.push(`DESCRIPTION:Prioridade: ${task.priority.toUpperCase()} | ARKIH AI Sincronização`);
+      icsContent.push(`DESCRIPTION:Prioridade: ${task.priority.toUpperCase()} | ARKIH Sincronização`);
       icsContent.push(`STATUS:${task.done ? 'COMPLETED' : 'CONFIRMED'}`);
       icsContent.push('END:VEVENT');
     });
@@ -145,11 +145,11 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
               Slide 6 • Ecossistema
             </span>
             <h2 className="text-base font-bold text-slate-900">
-              6. Integrações do ARKIH AI
+              Integrações do ARKIH
             </h2>
           </div>
           <p className="text-xs text-slate-500 max-w-2xl leading-relaxed">
-            Conectar o <strong>ARKIH AI</strong> ao ecossistema do usuário para garantir fluxo contínuo
+            Conectar o <strong>ARKIH</strong> ao ecossistema do usuário para garantir fluxo contínuo
             de dados, sincronização de disponibilidade e captura inteligente de compromissos.
           </p>
         </div>
@@ -186,7 +186,7 @@ export const IntegrationsView: React.FC<IntegrationsViewProps> = ({
             </div>
 
             <p className="text-xs text-slate-600 leading-relaxed mb-4">
-              Importa e exporta automaticamente eventos entre o ARKIH AI e o Google Agenda. Permite
+              Importa e exporta automaticamente eventos entre o ARKIH e o Google Agenda. Permite
               detectar janelas livres e evitar sobreposições de horários com suas aulas e reuniões.
             </p>
 

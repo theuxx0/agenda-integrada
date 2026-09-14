@@ -13,6 +13,8 @@ import {
   Rocket,
   ArrowRight,
   ShieldCheck,
+  Users,
+  Wallet,
 } from 'lucide-react';
 import { Task, ChatMessage, Priority, TabType } from '../types';
 import { TaskItem } from './TaskItem';
@@ -206,7 +208,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span className="text-xs font-bold text-white tracking-wide flex items-center gap-1.5">
-                  ARKIH AI <Sparkles className="w-3 h-3 text-indigo-400" />
+                  ARKIH <Sparkles className="w-3 h-3 text-indigo-400" />
                 </span>
               </div>
               <span className="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full font-medium">
@@ -216,7 +218,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
             {/* Messages Scroll Area */}
             <div className="flex flex-col gap-2 max-h-40 overflow-y-auto pr-1 mb-3 scrollbar-thin">
-              {aiMessages.slice(-3).map((msg) => (
+              {(aiMessages || []).slice(-3).map((msg) => (
                 <div
                   key={msg.id}
                   className={`text-xs p-2.5 rounded-xl leading-relaxed ${
@@ -237,7 +239,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               {isAILoading && (
                 <div className="flex items-center gap-2 text-xs text-slate-400 bg-slate-800/60 p-2 rounded-xl w-fit">
                   <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" />
-                  <span>ARKIH AI está processando...</span>
+                  <span>ARKIH está processando...</span>
                 </div>
               )}
             </div>
@@ -282,7 +284,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               type="submit"
               disabled={isAILoading || !chatInput.trim()}
               className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white p-2 rounded-xl transition-all shrink-0 cursor-pointer shadow-sm"
-              title="Enviar para ARKIH AI"
+              title="Enviar para ARKIH"
             >
               <Send className="w-3.5 h-3.5" />
             </button>
@@ -290,50 +292,98 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       </div>
 
-      {/* Highlights for Slide 6 and Slides 9 & 10 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {/* Highlights for Slide 6, Slides 9 & 10, Equipes e Cashout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         {/* Slide 6 Card */}
         <div
           onClick={() => onNavigateTab && onNavigateTab('integracoes')}
-          className="bg-gradient-to-br from-indigo-50/70 to-white border border-indigo-100 rounded-2xl p-4 shadow-xs hover:border-indigo-300 transition-all cursor-pointer flex items-center justify-between gap-3 group"
+          className="bg-gradient-to-br from-indigo-50/70 to-white border border-indigo-100 rounded-2xl p-3.5 shadow-xs hover:border-indigo-300 transition-all cursor-pointer flex items-center justify-between gap-2 group"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-              <Share2 className="w-5 h-5" />
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Share2 className="w-4 h-4" />
             </div>
-            <div>
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1 mb-0.5">
+                <span className="text-[9px] uppercase font-bold px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-700">
                   Slide 6
                 </span>
-                <h4 className="text-xs font-bold text-slate-900">Integrações ARKIH AI</h4>
               </div>
-              <p className="text-[11px] text-slate-500">
-                Google Calendar, Outlook e captura inteligente via e-mail e mensageria
+              <h4 className="text-xs font-bold text-slate-900 truncate">Integrações</h4>
+              <p className="text-[10px] text-slate-500 truncate">
+                Calendar, e-mails & bots
               </p>
             </div>
           </div>
-          <ArrowRight className="w-4 h-4 text-indigo-400 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all shrink-0" />
+          <ArrowRight className="w-3.5 h-3.5 text-indigo-400 group-hover:text-indigo-600 group-hover:translate-x-0.5 transition-all shrink-0" />
+        </div>
+
+        {/* Corporate Teams Card */}
+        <div
+          onClick={() => onNavigateTab && onNavigateTab('equipes')}
+          className="bg-gradient-to-br from-purple-50/70 to-white border border-purple-100 rounded-2xl p-3.5 shadow-xs hover:border-purple-300 transition-all cursor-pointer flex items-center justify-between gap-2 group"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Users className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1 mb-0.5">
+                <span className="text-[9px] uppercase font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-700">
+                  Equipes
+                </span>
+              </div>
+              <h4 className="text-xs font-bold text-slate-900 truncate">Despacho & Equipes</h4>
+              <p className="text-[10px] text-slate-500 truncate">
+                Consultas, entregas & IA
+              </p>
+            </div>
+          </div>
+          <ArrowRight className="w-3.5 h-3.5 text-purple-400 group-hover:text-purple-600 group-hover:translate-x-0.5 transition-all shrink-0" />
+        </div>
+
+        {/* Cashout Card */}
+        <div
+          onClick={() => onNavigateTab && onNavigateTab('cashout')}
+          className="bg-gradient-to-br from-emerald-50/70 to-white border border-emerald-100 rounded-2xl p-3.5 shadow-xs hover:border-emerald-300 transition-all cursor-pointer flex items-center justify-between gap-2 group"
+        >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Wallet className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1 mb-0.5">
+                <span className="text-[9px] uppercase font-bold px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-700">
+                  Finanças
+                </span>
+              </div>
+              <h4 className="text-xs font-bold text-slate-900 truncate">Cashout Pix</h4>
+              <p className="text-[10px] text-slate-500 truncate">
+                Liquidação instantânea
+              </p>
+            </div>
+          </div>
+          <ArrowRight className="w-3.5 h-3.5 text-emerald-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all shrink-0" />
         </div>
 
         {/* Slides 9 & 10 Card */}
         <div
           onClick={() => onNavigateTab && onNavigateTab('roadmap')}
-          className="bg-gradient-to-br from-amber-50/60 to-white border border-amber-100 rounded-2xl p-4 shadow-xs hover:border-amber-300 transition-all cursor-pointer flex items-center justify-between gap-3 group"
+          className="bg-gradient-to-br from-amber-50/60 to-white border border-amber-100 rounded-2xl p-3.5 shadow-xs hover:border-amber-300 transition-all cursor-pointer flex items-center justify-between gap-2 group"
         >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
-              <Rocket className="w-5 h-5" />
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Rocket className="w-4 h-4" />
             </div>
-            <div>
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">
-                  Slides 9 & 10
+            <div className="min-w-0">
+              <div className="flex items-center gap-1 mb-0.5">
+                <span className="text-[9px] uppercase font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-700">
+                  Planos
                 </span>
-                <h4 className="text-xs font-bold text-slate-900">Roadmap & Modelo SaaS</h4>
               </div>
-              <p className="text-[11px] text-slate-500">
-                Fases 1 a 6 de desenvolvimento e planos de monetização (Gratuito, Pro, Equipes)
+              <h4 className="text-xs font-bold text-slate-900 truncate">Planos</h4>
+              <p className="text-[10px] text-slate-500 truncate">
+                Assinaturas & Recursos
               </p>
             </div>
           </div>
@@ -388,7 +438,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         <div className="flex flex-col gap-2">
-          {filteredTasks.length > 0 ? (
+          {filteredTasks && filteredTasks.length > 0 ? (
             filteredTasks.map((task) => (
               <TaskItem
                 key={task.id}

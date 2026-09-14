@@ -102,7 +102,7 @@ export const HabitsView: React.FC<HabitsViewProps> = ({
             Melhor Sequência
           </div>
           <div className="text-2xl font-bold text-amber-600 flex items-center gap-1">
-            <span>{Math.max(...habits.map((h) => h.streak), 0)}</span>
+            <span>{habits && habits.length > 0 ? Math.max(...habits.map((h) => h.streak), 0) : 0}</span>
             <span className="text-lg">🔥</span>
           </div>
           <div className="text-xs text-slate-500 mt-0.5">dias consecutivos</div>
@@ -230,7 +230,7 @@ export const HabitsView: React.FC<HabitsViewProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {habits.map((habit) => {
+              {(habits || []).map((habit) => {
                 const meta = getCategoryMeta(habit.cat);
                 const isMetaReached = habit.completedDays.length >= habit.targetDaysPerWeek;
 
